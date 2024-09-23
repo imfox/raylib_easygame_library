@@ -5,4 +5,5 @@
 #include "DisplayObjectContainer.h"
 #include "Loader.h"
 #include "Image.h"
+#include "Label.h"
 #include "DeepSleep.h"

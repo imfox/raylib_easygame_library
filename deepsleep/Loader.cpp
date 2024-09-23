@@ -57,3 +57,8 @@ std::shared_ptr<ds::Texture> ds::Loader::setTexture(RLTexture& tex)
 {
 	return std::make_shared<Texture>(tex);
 }
+
+Font ds::Loader::getFont(const std::string& fontName, int fontSize)
+{
+	return GetFontDefault();
+}

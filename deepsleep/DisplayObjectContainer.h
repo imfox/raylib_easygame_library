@@ -4,9 +4,14 @@
 namespace ds {
 	class DisplayObjectContainer : public DisplayObject
 	{
+	protected:
+		friend DisplayObject;
+		bool sortDirty = false;
+		bool sortableChildren = false;
 	public:
 		int layout;
-		std::vector<DisplayObject*> childs;
+		std::vector<DisplayObject*> children;
+		std::vector<DisplayObject*> zOrderChilds;
 	public:
 		DisplayObjectContainer();
 		virtual ~DisplayObjectContainer();
@@ -21,6 +26,7 @@ namespace ds {
 		unsigned int numChildren();
 		virtual void $render();
 		void $drawChildren();
+		void sortChildren();
 	};
 }
 

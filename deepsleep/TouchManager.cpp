@@ -14,7 +14,7 @@ ds::DisplayObject* ds::TouchManager::hitNodeTest(DisplayObject* node, Vector2 po
 		if (!touchThrough) {
 			auto tx = (pos.x + node->getPivotX() * node->getScaleX()) / node->getScaleX();
 			auto ty = (pos.y + node->getPivotY() * node->getScaleY()) / node->getScaleY();
-			if (node->hitTest(pos.x, pos.y))
+			if (node->hitTest(tx, ty))
 				return node;
 		}
 	}
@@ -44,7 +44,7 @@ ds::DisplayObject* ds::TouchManager::hitTest(DisplayObject* node, TouchID id, Ve
 		auto container = (DisplayObjectContainer*)node;
 		for (int i = container->numChildren() - 1; i >= 0; i--)
 		{
-			auto child = container->childs[i];
+			auto child = container->children[i];
 			if (child->visible && child->touchEnabled) {
 				posTemp.x += node->getPivotX() * node->getScaleX();
 				posTemp.y += node->getPivotY() * node->getScaleY();
@@ -83,25 +83,68 @@ void ds::TouchManager::onTouchEnd(DisplayObject* node, TouchID id, const Vector2
 }
 
 void ds::TouchManager::update() {
-	if (!this->stage)return;
+	if (!stage || disabled) return;
+
+	TouchID id = INT_MIN;
+	TouchEvent type = TouchEvent::MOVE;
+
 	auto mousePos = GetMousePosition();
 	bool mouseMoved = mousePos.x != mousePositionLast.x && mousePos.y != mousePositionLast.y;
-
-	if (mouseMoved) {
-		std::cout << "mouseMoved test" << std::endl;
-
-	}
-	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-		std::cout << "IsMouseButtonPressed test" << std::endl;
-		auto hit = hitTest(stage, MOUSE_BUTTON_LEFT, mousePos);
-		if (hit) {
-			std::cout << typeid(*hit).name() << std::endl;
-			std::to_string(1);
-		}
-	} else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-		std::cout << "IsMouseButtonReleased test" << std::endl;
-	}
-
-
 	mousePositionLast = mousePos;
+
+	if (mode == TouchMode::Mouse) {
+		for (TouchID touchID = MOUSE_BUTTON_LEFT; touchID <= MOUSE_BUTTON_BACK; touchID++) {
+			if (IsMouseButtonPressed(touchID)) {
+				id = touchID;
+				type = TouchEvent::TOUCH_BEGIN;
+			} else if (IsMouseButtonReleased(touchID)) {
+				id = touchID;
+				type = TouchEvent::TOUCH_END;
+			}
+		}
+		if (mouseMoved && id == INT_MIN) {
+			id = MOUSE_BUTTON_LEFT;
+			type = TouchEvent::MOVE;
+		}
+	} else if (mode == TouchMode::Touch) {
+		auto touchCount = GetTouchPointCount();
+		Vector2 touchPos;
+		for (int i = 0, touchId; i < touchCount; i++) {
+			touchId = GetTouchPointId(i);
+			touchPos = GetTouchPosition(i);
+		}
+
+#ifdef _DEBUG //DEBUG on Windows
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			id = MOUSE_BUTTON_LEFT;
+			type = TouchEvent::TOUCH_BEGIN;
+		} else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+			id = MOUSE_BUTTON_LEFT;
+			type = TouchEvent::TOUCH_END;
+		}
+		if (mouseMoved && id == INT_MIN) {
+			id = MOUSE_BUTTON_LEFT;
+			type = TouchEvent::MOVE;
+		}
+#endif
+	}
+
+
+
+	if (id != INT_MIN) {
+		auto hit = hitTest(stage, id, mousePos);
+		if (hit) {
+			switch (type) {
+			case TouchEvent::TOUCH_BEGIN: onTouchBegin(hit, id, mousePos); break;
+			case TouchEvent::TOUCH_END: onTouchEnd(hit, id, mousePos); break;
+			case TouchEvent::MOVE: onTouchMove(hit, id, mousePos); break;
+			}
+			if (type != TouchEvent::MOVE) {
+				std::cout << typeid(*hit).name() << std::endl;
+			}
+		} else {
+
+		}
+	}
+
 }

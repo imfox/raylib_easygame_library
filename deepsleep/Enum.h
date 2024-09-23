@@ -1,7 +1,11 @@
 #pragma once
 namespace ds {
-	enum class LoaderResType
-	{
+	enum TouchMode {
+		Mouse = 0,
+		Touch,
+	};
+
+	enum class LoaderResType {
 		None = 0,
 		Texture,
 	};
@@ -53,6 +57,7 @@ namespace ds {
 		TOUCH_END,
 		TOUCH_ENTER,
 		TOUCH_OUT,
+		TOUCH_MOVE,
 		TOUCH_CANCEL,
 		TOUCH_RELEASE_OUTSIDE,
 		MOVE,

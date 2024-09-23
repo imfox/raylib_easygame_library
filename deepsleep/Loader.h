@@ -75,6 +75,8 @@ namespace ds {
 		static std::shared_ptr<Texture> setTexture(RLTexture& tex, int x, int y, int width, int height, int offsetX, int offsetY, int sourceWidth, int sourceHeight);
 		static std::shared_ptr<Texture> setTexture(RLTexture& tex);
 		static std::shared_ptr<LoaderRes> texture(std::string& url);
+
+		Font getFont(const std::string& fontName, int fontSize = 0);
 	};
 
 }

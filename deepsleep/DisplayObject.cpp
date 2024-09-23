@@ -10,14 +10,22 @@ void ds::DisplayObject::$setX(float x)
 	this->$values.x = x;
 }
 
-float ds::DisplayObject::$getX()
-{
+float ds::DisplayObject::$getX() {
+	if (this->$values.explicitX) {
+		return this->$values.explicitX;
+	}
 	return this->$values.x;
 }
 
-void ds::DisplayObject::$setY(float y)
-{
+void ds::DisplayObject::$setY(float y) {
 	this->$values.y = y;
+}
+
+float ds::DisplayObject::$getY() {
+	if (this->$values.explicitY) {
+		return this->$values.explicitY;
+	}
+	return this->$values.y;
 }
 
 void ds::DisplayObject::$setPivotX(float x)
@@ -33,11 +41,6 @@ void ds::DisplayObject::$setPivotY(float y)
 void ds::DisplayObject::$setAngle(float a)
 {
 	this->$values.angle = a;
-}
-
-float ds::DisplayObject::$getY()
-{
-	return this->$values.y;
 }
 
 float ds::DisplayObject::$getPivotX()
@@ -60,7 +63,9 @@ void ds::DisplayObject::$setWidth(float w) {
 }
 
 float ds::DisplayObject::$getWidth() {
-	if (!isnan(this->$values.width)) {
+	if (!isnan(this->$values.explicitWidth)) {
+		return this->$values.explicitWidth;
+	} else if (!isnan(this->$values.width)) {
 		return this->$values.width;
 	} else if (!isnan(this->$values.measureWidth)) {
 		return this->$values.measureWidth;
@@ -73,7 +78,9 @@ void ds::DisplayObject::$setHeight(float h) {
 }
 
 float ds::DisplayObject::$getHeight() {
-	if (!isnan(this->$values.height)) {
+	if (!isnan(this->$values.explicitHeight)) {
+		return this->$values.explicitHeight;
+	} else if (!isnan(this->$values.height)) {
 		return this->$values.height;
 	} else if (!isnan(this->$values.measureHeight)) {
 		return this->$values.measureHeight;
@@ -299,6 +306,17 @@ Vector2 ds::DisplayObject::globalToLocal(Vector2 pos)
 	return globalToLocal(pos.x, pos.y);
 }
 
+void ds::DisplayObject::setZIndex(int z) {
+	if (parent) {
+		parent->sortableChildren = true;
+		parent->sortDirty = true;
+	}
+	this->$values.zIndex = z;
+}
+
+int ds::DisplayObject::getZIndex() {
+	return this->$values.zIndex;
+}
 ds::DisplayObject* ds::DisplayObject::setX(float x)
 {
 	this->$setX(x);

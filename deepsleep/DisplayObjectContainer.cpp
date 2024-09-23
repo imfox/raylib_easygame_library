@@ -7,7 +7,7 @@ ds::DisplayObjectContainer::DisplayObjectContainer() {
 
 ds::DisplayObjectContainer::~DisplayObjectContainer()
 {
-	this->childs.clear();
+	this->children.clear();
 }
 
 void ds::DisplayObjectContainer::replaceChild(ds::DisplayObject* object, ds::DisplayObject* newObject)
@@ -21,30 +21,32 @@ void ds::DisplayObjectContainer::replaceChild(ds::DisplayObject* object, ds::Dis
 	parent->addChild(newObject);
 }
 
-ds::DisplayObject* ds::DisplayObjectContainer::addChild(ds::DisplayObject* object, int index)
-{
+ds::DisplayObject* ds::DisplayObjectContainer::addChild(ds::DisplayObject* object, int index) {
 	if (object->parent) {
 		if (object->parent == this)
 			if (this->getChildIndex(object) < index)
 				index--;
 		object->removeSelf();
 	}
-	int pos = index < 0 ? (int)this->childs.size() : index;
-	if (pos <= this->childs.size()) {
-		this->childs.insert(this->childs.begin() + pos, object);
+	int pos = index < 0 ? (int)this->children.size() : index;
+	if (pos <= this->children.size()) {
+		this->children.insert(this->children.begin() + pos, object);
 		object->parent = this;
 		//object->event((int)ds::Event::ADD);
+	}
+	if (object->$values.zIndex != 0) {
+		sortableChildren = true;
+		sortDirty = true;
 	}
 	return object;
 }
 
-ds::DisplayObject* ds::DisplayObjectContainer::removeChild(ds::DisplayObject* object)
-{
+ds::DisplayObject* ds::DisplayObjectContainer::removeChild(ds::DisplayObject* object) {
 	auto index = this->getChildIndex(object);
-	if (index >= 0)
-	{
-		this->childs.erase(this->childs.begin() + index);
+	if (index >= 0) {
+		this->children.erase(this->children.begin() + index);
 		object->parent = nullptr;
+		sortDirty = true;
 		//object->event((int)ds::Event::REMOVE);
 		return object;
 	}
@@ -54,13 +56,13 @@ ds::DisplayObject* ds::DisplayObjectContainer::removeChild(ds::DisplayObject* ob
 std::vector<ds::DisplayObject*> ds::DisplayObjectContainer::removeChild(int index, int end)
 {
 	std::vector<ds::DisplayObject*> result;
-	int size = this->childs.size();
+	int size = this->children.size();
 	if (index >= size)
 		return result;
 	auto end_ = std::min(size - 1, std::max(index, end));
 	for (int i = 0; i < (end_ - index) + 1; i++)
 	{
-		auto object = this->childs[index];
+		auto object = this->children[index];
 		this->removeChild(object);
 		result.push_back(object);
 	}
@@ -76,19 +78,19 @@ ds::DisplayObject* ds::DisplayObjectContainer::setChildIndex(ds::DisplayObject* 
 
 int ds::DisplayObjectContainer::getChildIndex(DisplayObject* object)
 {
-	auto iter = std::find(this->childs.begin(), this->childs.end(), object);
-	if (iter == this->childs.end())
+	auto iter = std::find(this->children.begin(), this->children.end(), object);
+	if (iter == this->children.end())
 		return -1;
-	return iter - this->childs.begin();
+	return iter - this->children.begin();
 }
 
 ds::DisplayObject* ds::DisplayObjectContainer::getChildByName(std::string name)
 {
-	auto begin = this->childs.begin();
-	auto iter = this->childs.begin();
-	while (iter != this->childs.end())
+	auto begin = this->children.begin();
+	auto iter = this->children.begin();
+	while (iter != this->children.end())
 	{
-		auto obj = this->childs.at(iter - begin);
+		auto obj = this->children.at(iter - begin);
 		if (obj->name == name)
 			return obj;
 		iter++;
@@ -110,7 +112,7 @@ bool ds::DisplayObjectContainer::contains(ds::DisplayObject* object)
 
 unsigned int ds::DisplayObjectContainer::numChildren()
 {
-	return this->childs.size();
+	return this->children.size();
 }
 
 void ds::DisplayObjectContainer::$render()
@@ -128,6 +130,9 @@ void ds::DisplayObjectContainer::$render()
 	if (this->$values.pivotX != 0.f && this->$values.pivotY != 0.f)
 		rlTranslatef(-this->$values.pivotX, -this->$values.pivotY, 0.f);
 
+	if (!filters.empty() || mask) {
+		//TODO
+	}
 
 	this->$draw();
 	this->$drawChildren();
@@ -135,15 +140,39 @@ void ds::DisplayObjectContainer::$render()
 	rlPopMatrix();
 }
 
-void ds::DisplayObjectContainer::$drawChildren()
-{
-	if (!this->childs.empty())
-	{
-		for (auto child : this->childs) {
-			if (child->visible /* || child.alpha <= 0.f */) {
+void ds::DisplayObjectContainer::$drawChildren() {
+	if (!this->children.empty()) {
+		if (this->sortableChildren && this->sortDirty)
+			this->sortChildren();
+		auto& childred = this->sortableChildren ? this->zOrderChilds : this->children;
+		for (auto child : childred)
+			if (child->visible /* || child.alpha <= 0.f */)
 				child->$render();
-			}
-		}
 	}
 }
+
+void ds::DisplayObjectContainer::sortChildren() {
+	sortDirty = false;
+	bool sortRequired = false;
+	for (int i = children.size() - 1; i >= 0; i--) {
+		auto& child = children[i];
+		if (!sortRequired && child->$values.zIndex != 0) {
+			sortRequired = true;
+			break;
+		}
+	}
+	zOrderChilds = children;
+	if (sortRequired) {
+		int count = this->numChildren();
+		DisplayObject* temp;
+		for (int a = 0; a < count - 1; a++)
+			for (int b = a + 1; b < count; b++)
+				if (zOrderChilds[a]->$values.zIndex > zOrderChilds[b]->$values.zIndex) {
+					temp = zOrderChilds[b];
+					zOrderChilds[b] = zOrderChilds[a];
+					zOrderChilds[a] = temp;
+				}
+	}
+}
+
 

@@ -12,12 +12,24 @@ namespace ds {
 	class DisplayObject : public Object
 	{
 	protected:
+		friend DisplayObjectContainer;
 		struct Value
 		{
 			float x = 0.f;
 			float y = 0.f;
+			int zIndex = 0;
 			float width = NAN;
 			float height = NAN;
+			float left = NAN;
+			float right = NAN;
+			float top = NAN;
+			float bottom = NAN;
+			float explicitX = NAN; //被Relative(left)或者Layout设置后的X
+			float explicitY = NAN; //被Relative(top)或者Layout设置后的Y
+			float explicitWidth = NAN; //被Relative(left, right)或者Layout设置后的宽高
+			float explicitHeight = NAN;//被Relative(top, bottom)或者Layout设置后的宽高
+			float measureWidth = NAN;
+			float measureHeight = NAN;
 			float scaleX = 1.f;
 			float scaleY = 1.f;
 			float pivotX = 0.f;
@@ -25,8 +37,6 @@ namespace ds {
 			float angle = 0.f;
 			float alpha = 1.f;
 			Color tint = { 0 };
-			float measureWidth = NAN;
-			float measureHeight = NAN;
 		};
 		Value $values;
 		Matrix $matrix;
@@ -115,6 +125,8 @@ namespace ds {
 		float getScaleY();
 		float getWidth();
 		float getHeight();
+		void setZIndex(int z);
+		int getZIndex();
 		DisplayObject* size(float w, float h);
 
 		Vector2 localToParent(float x, float y);

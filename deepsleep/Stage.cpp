@@ -26,7 +26,7 @@ void ds::Stage::gameLoop()
 	while (WindowShouldClose() == false) {
 		update();
 		BeginDrawing();
-		this->render();
+		render();
 		EndDrawing();
 	}
 
